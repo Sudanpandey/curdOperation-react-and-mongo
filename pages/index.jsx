@@ -5,6 +5,7 @@ import { Formik } from "formik";
 import axios from "axios";
 
 import {
+  Avatar,
   Box,
   Input,
   Button,
@@ -56,6 +57,7 @@ const initialValues = {
   age: "",
   bloodgroup: "",
   address: "",
+  image_url: "",
 };
 
 const index = () => {
@@ -83,13 +85,13 @@ const index = () => {
     try {
       await axios.post("http://localhost:3000", values);
       getData();
-    } catch (error) {
+    } catch (error) {    
       console.log(error);
     }
   };
 
   // ************************ Delete data from the table
-  const deleteData = async (name) => {
+  const deleteData = async (name) => {    
     try {
       await axios.delete(`http://localhost:3000?name=${name}`);
       getData();
@@ -97,6 +99,7 @@ const index = () => {
       console.log(error);
     }
   };
+
   const putData = async (values) => {
     try {
       delete values._id;
@@ -112,8 +115,6 @@ const index = () => {
     getData();
   }, []);
 
-  console.log({ selectedStudent });
-
   return (
     <Formik
       enableReinitialize
@@ -124,7 +125,7 @@ const index = () => {
         } else {
           addData(values);
         }
-        resetForm({});
+          
       }}
       validationSchema={formValidationSchema}
     >
@@ -135,8 +136,28 @@ const index = () => {
         handleSubmit,
         errors,
         touched,
+        setFieldValue,
       }) => {
-        console.log(errors);
+        const uploadImage = async (image) => {
+          try {
+            const formData = new FormData();
+            formData.append("image", image, image.name);
+            const {
+              data: { data },
+            } = await axios.post(`http://localhost:3000/upload`, formData);
+            if (data) setFieldValue("image_url", data);
+          } catch (error) {
+            console.log(error);
+          } 
+        };  
+
+        const handleImageUpload = (e) => {
+          const [file] = e.target.files;
+          if (file) {
+            uploadImage(file);
+          }
+        };
+        console.log(values);
         return (
           <form onSubmit={handleSubmit}>
             <div>
@@ -380,6 +401,7 @@ const index = () => {
                         >
                           <TableHead>
                             <TableRow>
+                              <TableCell align="center">Image</TableCell>
                               <TableCell align="center">Name</TableCell>
                               <TableCell align="center">Mobile</TableCell>
                               <TableCell align="center">Email</TableCell>
@@ -392,6 +414,12 @@ const index = () => {
                           <TableBody>
                             {students.map((row) => (
                               <TableRow key={row.id}>
+                                <TableCell align="center">
+                                  <img
+                                    src={row.image_url}
+                                    style={{ width: "30px", height: "30px" }}
+                                  />
+                                </TableCell>
                                 <TableCell align="center">{row.name}</TableCell>
                                 <TableCell align="center">
                                   {row.mobile}
@@ -426,6 +454,31 @@ const index = () => {
                     {/* Table part end  */}
                   </Box>
                 </Box>
+              </Box>
+              <Box
+                style={{
+                  marginLeft: "500px",
+                  display: "flex",
+                  flexDirection: "column",
+                }}
+              >
+                <Avatar
+                  src={values.image_url}
+                  style={{
+                    marginTop: "10px",
+                    width: "200px",
+                    height: "200px",
+                  }}
+                ></Avatar>
+                <Input
+                  disableUnderline={true}
+                  type="file"
+                  accept="image/*" 
+                  onChange={handleImageUpload}
+                  style={{ marginTop: "20px", marginLeft: "45px" }}
+                >
+                  Choose file              
+                </Input>
               </Box>
             </div>
           </form>
